@@ -191,3 +191,11 @@ Fully supported.
 ## 📣 Support
 
 waelheni@neurahex.com
+
+---
+
+## Demo
+
+A short walkthrough showing configuration and alert lifecycle:
+
+🎥 [Watch Demo Video](https://www.loom.com/share/6e03c3819c8c4ab78d8fe9ea7f7df0ae)
