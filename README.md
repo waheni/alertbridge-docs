@@ -1,4 +1,5 @@
-# AlertBridge
+# 🚨 AlertBridge — Alerts → Jira (Forge App)
+
 
 AlertBridge is a Jira Cloud app that converts incoming alerts into Jira issues using a secure webhook.
 
@@ -6,69 +7,187 @@ It enables teams to automatically create, update, resolve, and reopen Jira issue
 
 ---
 
-## Overview
+## ✨ What AlertBridge does
+AlertBridge receives alert events via HTTPS webhook and automatically.
+When an alert arrives:
 
-AlertBridge receives alert events via HTTPS webhook and automatically:
+- 🔥 **Firing alert** → creates a Jira issue (first time only)
+- 🔁 **Repeated firing** → adds a comment to the same issue (no spam)
+- ✅ **Resolved** → adds a “resolved” comment and transitions the issue (if configured)
+- ♻️ **Fires again after resolved** → reopens and comments
 
-- Creates Jira issues when alerts fire
-- Deduplicates repeated alerts
-- Adds comments for recurring alerts
-- Transitions issues when alerts resolve
-- Reopens issues if alerts fire again
-
-AlertBridge works with any system capable of sending JSON payloads over HTTP.
-
+Designed to be **simple**, **secure**, and **production-safe**.
 ---
-
 ## Prerequisites
 
-- Jira Administrator permissions are required to configure the app
-- The alert source must support HTTPS POST requests
-- Payloads must be valid JSON
-- Requests must include Bearer token authentication
+- You must be a Jira Administrator to configure AlertBridge.
+- Your alerting system must be able to send JSON over HTTPS.
+- Use the Bearer token provided by AlertBridge in all webhook requests.
+---
+
+## 🔐 Security model (Token)
+
+AlertBridge protects your webhook endpoint using a **Bearer token**.
+
+- Token stored securely (Forge secret)
+- UI shows masked token
+- Regenerate anytime
+- Treat like an API key
 
 ---
 
-## Installation
+## 🛠️ Configuration
 
-1. Install **AlertBridge** from the Atlassian Marketplace
-2. Open **Jira Settings → Apps → AlertBridge**
-3. Open the **AlertBridge Configuration** page
-
----
-
-## Configuration
-
-From the AlertBridge administration page:
-
-1. Copy the generated **Webhook URL**
-2. Generate or regenerate the **Bearer Token**
-3. Select the target **Jira Project**
-4. Select the **Issue Type**
-5. (Optional) Configure ignored alert labels
-6. Click **Save**
+1. Go to **Jira settings → Apps → AlertBridge**
+2. Select:
+   - ✅ Project
+   - ✅ Issue Type
+3. Click **Save**
+4. Click **Regenerate Token**
+5. Copy **Webhook URL**
 
 ---
 
-## Sending a Test Alert
+## 🚀 Quick Start (Alertmanager example)
 
-You can validate AlertBridge using `curl`.
+```yaml
+receivers:
+  - name: alertbridge-jira
+    webhook_configs:
+      - url: <WEBHOOK_URL>
+        http_config:
+          authorization:
+            type: Bearer
+            credentials: <YOUR_TOKEN>
+
+route:
+  receiver: alertbridge-jira
+```
 
 ---
 
-### Example: Firing Alert
+## 🧪 Testing with curl
+
+### 🔥 Firing alert
 
 ```bash
-curl -X POST "YOUR_WEBHOOK_URL" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
+curl -i -X POST "<WEBHOOK_URL>" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
   -H "Content-Type: application/json" \
-  -d '{
-    "status": "firing",
-    "labels": {
-      "alertname": "AlertBridgeDemo",
-      "severity": "warning"
-    },
-    "annotations": {
-      "summary": "Test alert from AlertBridge"
-    }
+  --data-binary '{
+    "status":"firing",
+    "alerts":[{
+      "status":"firing",
+      "labels":{
+        "alertname":"TestAlert",
+        "severity":"critical",
+        "service":"api",
+        "env":"prod"
+      },
+      "annotations":{
+        "summary":"Test alert",
+        "description":"Testing AlertBridge"
+      }
+    }]
   }'
+```
+
+Expected:
+- HTTP 200
+- Jira issue created
+
+---
+
+### 🔁 Repeated firing → comment only
+
+Send same payload again → existing issue updated.
+
+---
+
+### ✅ Resolve alert
+
+```bash
+curl -i -X POST "<WEBHOOK_URL>" \
+  -H "Authorization: Bearer <YOUR_TOKEN>" \
+  -H "Content-Type: application/json" \
+  --data-binary '{
+    "status":"resolved",
+    "alerts":[{
+      "status":"resolved",
+      "labels":{
+        "alertname":"TestAlert",
+        "severity":"critical",
+        "service":"api",
+        "env":"prod"
+      },
+      "annotations":{
+        "summary":"Resolved",
+        "description":"Should resolve Jira issue"
+      }
+    }]
+  }'
+```
+
+Expected:
+- Comment added
+- Issue transitioned if possible
+
+---
+
+### ♻️ Fire again → reopen
+
+Send firing again → issue reopened.
+
+---
+
+## 🧠 Deduplication logic
+
+Fingerprint built from alert **labels**.
+
+Avoid duplicates by ignoring volatile labels like:
+`instance,pod,container,node`
+
+---
+
+## ❤️ Health / Debugging
+
+Health section shows:
+
+- Last webhook received
+- Last error
+- Created / Updated counters
+
+---
+
+## 🧯 Troubleshooting
+
+**Unauthorized**
+→ Check `Authorization: Bearer <TOKEN>`
+
+**No issues created**
+→ Save Jira Target config
+
+**Too many issues**
+→ Ignore changing labels
+
+**No transitions**
+→ Workflow mismatch (comments still work)
+
+---
+
+## ❓ FAQ
+
+**Need Prometheus?**
+No. Any sender can POST compatible payload.
+
+**Token hidden?**
+Security best practice.
+
+**Only curl testing?**
+Fully supported.
+
+---
+
+## 📣 Support
+
+waelheni@neurahex.com
