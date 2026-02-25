@@ -628,93 +628,35 @@ AlertBridge uses **app-level authorization** to create and update Jira issues. T
 
 ---
 
-## Limitations
+## Limitations (Planned Improvements)
 
-### Functional Limitations
+Below are the current functional limitations. These are **planned as upcoming features** so they can be addressed in future releases.
 
-#### 1. Single Project per Configuration
-- AlertBridge creates all issues in **one project** and **one issue type**
-- **Workaround:** Install multiple instances of AlertBridge (not currently supported) or use Jira automation to move issues based on labels
+### Functional Limitations (Planned Features)
 
-#### 2. Issue Type Restrictions
-- All alerts create the same issue type
-- Cannot create different issue types based on alert severity or labels
-- **Workaround:** Use Jira automation rules to change issue types after creation
+#### 1. Multi-Project Targeting
+- **Current:** AlertBridge creates all issues in **one project** and **one issue type**.
+- **Upcoming feature:** Ability to route alerts to multiple projects based on labels, severity, or service.
 
-#### 3. Workflow Transitions
-- AlertBridge attempts to transition issues but depends on your Jira workflow
-- **Limitations:**
-  - If "Done" or "Reopen" transitions don't exist, AlertBridge adds comments instead
-  - Cannot handle complex workflow conditions (e.g., required fields, validators)
-  - Transitions with the same name but different IDs may not work correctly
-- **Workaround:** Ensure your workflow has standard transition names: "Done", "Reopen"
+#### 2. Dynamic Issue Type Selection
+- **Current:** All alerts create the same issue type.
+- **Upcoming feature:** Support for different issue types based on alert severity or custom rules.
 
-#### 4. Field Customization
-- AlertBridge sets only these fields:
-  - Summary (title)
-  - Description
-  - Priority (based on severity)
-  - Project and Issue Type
-- **Cannot set:**
-  - Assignee
-  - Custom fields
-  - Labels
-  - Components
-  - Fix versions
-- **Workaround:** Use Jira automation to set additional fields based on issue content
+#### 3. Workflow Transition Flexibility
+- **Current:** Transitions rely on standard names like "Done" or "Reopen" and may fail if workflows are complex.
+- **Upcoming feature:** Configurable transition mapping per project/issue type, including support for workflow validators.
 
-#### 5. Fingerprint Calculation
-- Fingerprints are based on **labels only**, not annotations or other alert data
-- If labels change (but represent the same alert), a new issue is created
-- **Workaround:** Configure ignore labels for frequently-changing label keys (instance, pod, node)
+#### 4. Extended Field Mapping
+- **Current:** Only summary, description, priority, project, and issue type are set.
+- **Upcoming feature:** Mapping of additional fields such as assignee, labels, components, and custom fields.
 
-#### 6. Alert Payload Format
-- Only supports **Prometheus Alertmanager webhook format**
-- Other formats require translation/adaptation
-- **Workaround:** Use an intermediate webhook proxy to transform payloads
+#### 5. Smarter Deduplication Options
+- **Current:** Fingerprints are based on labels only, so label changes can create new issues.
+- **Upcoming feature:** More flexible deduplication rules including annotation support and custom fingerprint templates.
 
-### Technical Limitations
-
-#### 1. Rate Limits
-- Subject to Forge platform rate limits (typically 100 requests per minute)
-- Subject to Jira API rate limits
-- **Impact:** During alert storms, some requests may be delayed or rejected
-
-#### 2. Processing Time
-- Webhook processing is synchronous (caller waits for Jira API calls to complete)
-- Typical response time: 1-3 seconds per alert
-- **Impact:** Very large alert batches may time out
-
-#### 3. Batch Size
-- Processes all alerts in a single webhook request sequentially
-- No practical limit on alerts per request, but large batches increase processing time
-- **Recommendation:** Keep batches under 50 alerts
-
-#### 4. Storage Limits
-- Forge KVS storage is limited per app (typically 10,000 entries)
-- Each unique alert fingerprint consumes one storage entry
-- **Impact:** After creating ~10,000 unique alerts, storage may be exhausted
-- **Workaround:** Periodic cleanup of old fingerprints (manual process)
-
-#### 5. No Alert History
-- AlertBridge does not store alert history beyond the current issue mapping
-- Cannot query historical alerts through AlertBridge
-- **Workaround:** Use Jira's native search and reporting for issue history
-
-### Deployment Limitations
-
-#### 1. Single Environment Configuration
-- Configuration is environment-specific (development, staging, production)
-- **Impact:** Different environments require separate configuration
-
-#### 2. No Multi-Site Support
-- Each Jira site requires a separate AlertBridge installation
-- Configuration does not sync across sites
-
-#### 3. Development Mode Token Exposure
-- In development mode, the `getFullTokenDev` resolver exposes the full token
-- **⚠️ IMPORTANT:** This resolver should be removed before production deployment
-- **Impact:** Potential security risk if development mode is used in production
+#### 6. Broader Webhook Format Support
+- **Current:** Only Prometheus Alertmanager webhook format is supported.
+- **Upcoming feature:** Built-in support for additional alert payload formats without needing a proxy.
 
 ---
 
