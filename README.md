@@ -1123,4 +1123,3 @@ If you encounter issues not covered in this guide:
 **AlertBridge Version:** 1.1.31  
 **Last Updated:** February 25, 2026
 
-For technical or developer documentation, see the README.md file in the AlertBridge repository.
